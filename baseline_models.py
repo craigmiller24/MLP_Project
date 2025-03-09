@@ -102,7 +102,7 @@ def train_multinomial_logistic_regression(X_train, Y_train, X_test, Y_test, num_
     plt.ylabel('Loss')
     plt.title('Loss Across Epochs')
     plt.legend()
-    plt.savefig('training_loss_plot_MLR.png', dpi=300, bbox_inches='tight')
+    plt.savefig('Images/training_loss_plot_MLR.png', dpi=300, bbox_inches='tight')
     plt.show()
 
     # Plot Accuracy
@@ -112,7 +112,7 @@ def train_multinomial_logistic_regression(X_train, Y_train, X_test, Y_test, num_
     plt.ylabel('Accuracy')
     plt.title('Accuracy Across Epochs')
     plt.legend()
-    plt.savefig('training_accuracy_plot_MLR.png', dpi=300, bbox_inches='tight')
+    plt.savefig('Images/training_accuracy_plot_MLR.png', dpi=300, bbox_inches='tight')
     plt.show()
 
     return model, metrics
@@ -168,7 +168,7 @@ def train_decision_tree(X_train_torch, X_test_torch, Y_train_torch, Y_test_torch
         label='root',
     )
     plt.title("Decision Tree Visualization (Simplified)", pad=30, fontsize=16)
-    plt.savefig('decision_tree_plot.png', dpi=300, bbox_inches='tight')
+    plt.savefig('Images/decision_tree_plot.png', dpi=300, bbox_inches='tight')
     plt.show()
 
     # Feature importance plot
@@ -182,7 +182,7 @@ def train_decision_tree(X_train_torch, X_test_torch, Y_train_torch, Y_test_torch
     plt.xlabel('Feature Importance', fontsize=12)
     plt.ylabel('Features', fontsize=12)
     plt.title('Feature Importance in Decision Tree', fontsize=14, pad=20)
-    plt.savefig('feature_importance_plot.png', dpi=300, bbox_inches='tight')
+    plt.savefig('Images/feature_importance_plot.png', dpi=300, bbox_inches='tight')
     plt.show()
 
     # Predict on the training and test sets

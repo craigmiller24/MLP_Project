@@ -70,7 +70,7 @@ def train_random_forest(X_train_torch, X_test_torch, Y_train_torch, Y_test_torch
     plt.title('Feature Importance in Random Forest', fontsize=14, pad=20)
     plt.yticks(fontsize=9)
     plt.tight_layout()
-    plt.savefig('rf_feature_importance_plot.png', dpi=300, bbox_inches='tight', facecolor='white', edgecolor='none')
+    plt.savefig('Images/rf_feature_importance_plot.png', dpi=300, bbox_inches='tight', facecolor='white', edgecolor='none')
     plt.show()
     
     return rf_model, metrics
@@ -202,7 +202,7 @@ def train_lstm(X_train_torch, X_test_torch, Y_train_torch, Y_test_torch, hidden_
     plt.ylabel('Loss')
     plt.title('Loss Across Epochs')
     plt.legend()
-    plt.savefig('training_loss_plot_LSTM.png', dpi=300, bbox_inches='tight')
+    plt.savefig('Images/training_loss_plot_LSTM.png', dpi=300, bbox_inches='tight')
     plt.show()
 
     # Plot accuracy
@@ -212,7 +212,7 @@ def train_lstm(X_train_torch, X_test_torch, Y_train_torch, Y_test_torch, hidden_
     plt.ylabel('Accuracy')
     plt.title('Accuracy Across Epochs')
     plt.legend()
-    plt.savefig('training_accuracy_plot_LSTM.png', dpi=300, bbox_inches='tight')
+    plt.savefig('Images/training_accuracy_plot_LSTM.png', dpi=300, bbox_inches='tight')
     plt.show()
 
     # Return the model and the evaluation metrics
@@ -358,7 +358,7 @@ def train_rf_then_lstm(X_train_torch, X_test_torch, Y_train_torch, Y_test_torch,
     plt.ylabel('Loss')
     plt.title('Loss Across Epochs')
     plt.legend()
-    plt.savefig('training_loss_plot_LSTM.png', dpi=300, bbox_inches='tight')
+    plt.savefig('Images/training_loss_plot_LSTM.png', dpi=300, bbox_inches='tight')
     plt.show()
 
     plt.figure(figsize=(4, 4))
@@ -367,7 +367,7 @@ def train_rf_then_lstm(X_train_torch, X_test_torch, Y_train_torch, Y_test_torch,
     plt.ylabel('Accuracy')
     plt.title('Accuracy Across Epochs')
     plt.legend()
-    plt.savefig('training_accuracy_plot_LSTM.png', dpi=300, bbox_inches='tight')
+    plt.savefig('Images/training_accuracy_plot_LSTM.png', dpi=300, bbox_inches='tight')
     plt.show()
 
     return model, metrics
