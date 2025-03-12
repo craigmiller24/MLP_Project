@@ -9,7 +9,7 @@ import torch.optim as optim
 
 # Multinomial logistic regression
 
-def train_multinomial_logistic_regression(X_train, Y_train, X_test, Y_test, num_epochs=100, lr=0.01):
+def train_multinomial_logistic_regression(X_train, X_test, Y_train, Y_test, num_epochs=100, lr=0.01):
     class MultinomialLogisticRegression(nn.Module):
         def __init__(self, input_dim, output_dim):
             super(MultinomialLogisticRegression, self).__init__()

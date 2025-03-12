@@ -87,7 +87,7 @@ def preprocess_no_split(df, data_type, scaler=None, preprocessor=None):
     Y_torch = torch.LongTensor(y.values)
     
     # Generate feature names after OneHotEncoding for categorical columns
-    # categorical_feature_names = preprocessor.named_transformers_['cat'].get_feature_names_out(categorical_cols)
-    # feature_names = numerical_cols + list(categorical_feature_names)
+    categorical_feature_names = preprocessor.named_transformers_['cat'].get_feature_names_out(categorical_cols)
+    feature_names = numerical_cols + list(categorical_feature_names)
     
-    return X_torch, Y_torch, scaler, preprocessor 
+    return X_torch, Y_torch, scaler, preprocessor, feature_names
