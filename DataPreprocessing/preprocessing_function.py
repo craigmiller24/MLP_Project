@@ -2,6 +2,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
 import torch
+import numpy as np
 
 def preprocess_data(df, test_size=0.2, random_state=42):
     # Define target variables and feature variables
@@ -28,12 +29,19 @@ def preprocess_data(df, test_size=0.2, random_state=42):
     # Preprocess the data (Fit on training data and transform both training and test data)
     X_train_processed = preprocessor.fit_transform(X_train)
     X_test_processed = preprocessor.transform(X_test)
-    
-    # Convert to PyTorch tensors (no additional normalization needed here)
-    X_train_torch = torch.FloatTensor(X_train_processed.toarray())
-    Y_train_torch = torch.LongTensor(Y_train.values)
-    X_test_torch = torch.FloatTensor(X_test_processed.toarray())
-    Y_test_torch = torch.LongTensor(Y_test.values)
+
+    # Convert sparse matrices to dense ONLY IF NEEDED
+    if hasattr(X_train_processed, "toarray"):  
+        X_train_processed = X_train_processed.toarray()
+        X_test_processed = X_test_processed.toarray()
+
+    # Ensure float32 conversion
+    X_train_torch = torch.tensor(X_train_processed.astype(np.float32))
+    X_test_torch = torch.tensor(X_test_processed.astype(np.float32))
+
+    # Ensure labels are int64 (for classification)
+    Y_train_torch = torch.tensor(Y_train.values, dtype=torch.long)
+    Y_test_torch = torch.tensor(Y_test.values, dtype=torch.long)
 
     # Generate feature names after OneHotEncoding for categorical columns
     categorical_feature_names = preprocessor.named_transformers_['cat'].get_feature_names_out(categorical_cols)

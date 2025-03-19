@@ -370,4 +370,4 @@ def train_rf_then_lstm(X_train_torch, X_test_torch, Y_train_torch, Y_test_torch,
     plt.savefig('Images/training_accuracy_plot_LSTM.png', dpi=300, bbox_inches='tight')
     plt.show()
 
-    return model, metrics
+    return model, metrics, top_features
