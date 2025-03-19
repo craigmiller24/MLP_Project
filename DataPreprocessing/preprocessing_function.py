@@ -34,11 +34,6 @@ def preprocess_data(df, test_size=0.2, random_state=42):
     Y_train_torch = torch.LongTensor(Y_train.values)
     X_test_torch = torch.FloatTensor(X_test_processed.toarray())
     Y_test_torch = torch.LongTensor(Y_test.values)
-
-    # Normalize data
-    scaler = StandardScaler()
-    X_train_torch = torch.tensor(scaler.fit_transform(X_train_torch), dtype=torch.float32)
-    X_test_torch = torch.tensor(scaler.transform(X_test_torch), dtype=torch.float32)
     
     # Generate feature names after OneHotEncoding for categorical columns
     categorical_feature_names = preprocessor.named_transformers_['cat'].get_feature_names_out(categorical_cols)
@@ -65,6 +60,7 @@ def preprocess_no_split(df, data_type, scaler=None, preprocessor=None):
     # Preprocess the data (Fit on training data and transform both training and test data)
     if data_type == 'train':
 
+        "new scaler for both X train and X test, is that ok?"
         # Preprocessing pipeline
         preprocessor = ColumnTransformer(
         transformers=[
@@ -76,12 +72,12 @@ def preprocess_no_split(df, data_type, scaler=None, preprocessor=None):
         
         # Normalising data
         scaler = StandardScaler() 
-        X_torch = torch.tensor(scaler.fit_transform(X_torch), dtype=torch.float32)
+        # X_torch = torch.tensor(scaler.fit_transform(X_torch), dtype=torch.float32)
 
     elif data_type == 'test':
         X_processed = preprocessor.transform(X)
         X_torch = torch.FloatTensor(X_processed.toarray())
-        X_torch = torch.tensor(scaler.transform(X_torch), dtype=torch.float32)
+        # X_torch = torch.tensor(scaler.transform(X_torch), dtype=torch.float32)
 
     # Convert to PyTorch tensors
     Y_torch = torch.LongTensor(y.values)

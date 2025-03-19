@@ -39,11 +39,6 @@ def preprocess_data_gpu(df, test_size=0.2, random_state=42):
     Y_train_torch = torch.LongTensor(Y_train.values)
     X_test_torch = torch.FloatTensor(X_test_processed.toarray())
     Y_test_torch = torch.LongTensor(Y_test.values)
-
-    # Normalize data
-    scaler = StandardScaler()
-    X_train_torch = torch.tensor(scaler.fit_transform(X_train_torch), dtype=torch.float32)
-    X_test_torch = torch.tensor(scaler.transform(X_test_torch), dtype=torch.float32)
     
     # Generate feature names after OneHotEncoding for categorical columns
     categorical_feature_names = preprocessor.named_transformers_['cat'].get_feature_names_out(categorical_cols)
