@@ -3,22 +3,16 @@ import shap
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
-import gc
-
-# Device detection
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+import shap
 
 def plot_shap_values_DT(decision_tree_model, X_train_torch, X_test_torch, feature_names, location_code, save_path="shap_plot.png"):
     """
     Computes, plots, and saves SHAP values for a Decision Tree model.
-    Works with data on either GPU or CPU.
     
     Parameters:
     - decision_tree_model: Trained Decision Tree model object
-    - X_train_torch: PyTorch tensor of training data (can be on GPU or CPU)
-    - X_test_torch: PyTorch tensor of test data (can be on GPU or CPU)
+    - X_train_torch: PyTorch tensor of training data
+    - X_test_torch: PyTorch tensor of test data
     - feature_names: List of feature names after preprocessing
     - location_code: 3-letter airport/location code (e.g., 'jfk')
     - save_path: File path to save the figure (default: 'shap_plot.png')
@@ -27,16 +21,9 @@ def plot_shap_values_DT(decision_tree_model, X_train_torch, X_test_torch, featur
     - None (displays and saves SHAP summary plot)
     """
     
-    # Check if X_train_torch and X_test_torch are lists, then concatenate them if needed
-    if isinstance(X_train_torch, list):
-        X_train_torch = torch.cat(X_train_torch, dim=0)
-    
-    if isinstance(X_test_torch, list):
-        X_test_torch = torch.cat(X_test_torch, dim=0)
-    
-    # Make sure tensors are on CPU and convert to NumPy arrays
-    X_train_np = X_train_torch.cpu().numpy()
-    X_test_np = X_test_torch.cpu().numpy()
+    # Convert PyTorch tensors to NumPy arrays
+    X_train_np = X_train_torch.numpy()
+    X_test_np = X_test_torch.numpy()
 
     # Create SHAP explainer for the decision tree
     explainer = shap.TreeExplainer(decision_tree_model.model)
@@ -68,16 +55,14 @@ def plot_shap_values_DT(decision_tree_model, X_train_torch, X_test_torch, featur
     
     print(f"SHAP summary plot generated and saved as '{save_path}' for {location_code.upper()}")
 
-
 def plot_shap_values_MLR(MLR_model, X_train_torch, X_test_torch, feature_names, location_code, save_path="shap_plot.png"):
     """
-    Computes, plots, and saves SHAP values for a Multinomial Logistic Regression model.
-    Works with data on either GPU or CPU.
+    Computes, plots, and saves SHAP values for a Multinomial Logistic Regression model in PyTorch.
     
     Parameters:
-    - logistic_regression_model: Trained Logistic Regression model (e.g., sklearn or PyTorch model)
-    - X_train_torch: PyTorch tensor of training data (can be on GPU or CPU)
-    - X_test_torch: PyTorch tensor of test data (can be on GPU or CPU)
+    - MLR_model: Trained PyTorch Logistic Regression model
+    - X_train_torch: PyTorch tensor of training data
+    - X_test_torch: PyTorch tensor of test data
     - feature_names: List of feature names after preprocessing
     - location_code: 3-letter airport/location code (e.g., 'jfk')
     - save_path: File path to save the figure (default: 'shap_plot.png')
@@ -85,54 +70,72 @@ def plot_shap_values_MLR(MLR_model, X_train_torch, X_test_torch, feature_names, 
     Returns:
     - None (displays and saves SHAP summary plot)
     """
-    # Make sure the model is in evaluation mode
-    MLR_model.eval()
+    # Extract weights from PyTorch model
+    weights = MLR_model.linear.weight.detach().numpy()
+    bias = MLR_model.linear.bias.detach().numpy()
     
-    # Create a PyTorch-compatible wrapper for the linear model
-    class LinearModelWrapper:
-        def __init__(self, model):
-            self.model = model
-            # Extract weights and bias from the PyTorch model's linear layer
-            # Make sure to move to CPU for compatibility with SHAP
-            self.weights = model.linear.weight.detach().cpu().numpy()
-            self.bias = model.linear.bias.detach().cpu().numpy()
-        
-        def __call__(self, X):
-            return X @ self.weights.T + self.bias
+    # Convert PyTorch tensors to NumPy arrays
+    X_train_np = X_train_torch.detach().numpy()
+    X_test_np = X_test_torch.detach().numpy()
 
-    # Wrap the MLR model
-    wrapped_model = LinearModelWrapper(MLR_model)
-
-    # Convert PyTorch tensors to NumPy arrays (make sure they're on CPU first)
-    X_train_np = X_train_torch.cpu().numpy()
-    X_test_np = X_test_torch.cpu().numpy()
-
-    # Use SHAP's LinearExplainer for logistic regression
-    explainer = shap.LinearExplainer(wrapped_model, X_train_np)
-
+    # Create a Kernel explainer since we're working with a custom model
+    # First create a function that returns model predictions
+    def model_predict(X):
+        X_tensor = torch.FloatTensor(X)
+        with torch.no_grad():
+            output = MLR_model(X_tensor)
+            # Convert to probabilities using softmax
+            probs = torch.nn.functional.softmax(output, dim=1).numpy()
+        return probs
+    
+    # Use a subset of training data as background for the explainer
+    background = shap.kmeans(X_train_np, 100)  # Use KMeans to summarize the training data
+    
+    # Create explainer
+    explainer = shap.KernelExplainer(model_predict, background)
+    
+    # Compute SHAP values on a subset of test data for efficiency
+    sample_size = min(500, X_test_np.shape[0])  # Use at most 500 test samples
+    X_test_sample = X_test_np[:sample_size]
+    
     # Compute SHAP values
-    shap_values = explainer.shap_values(X_test_np)  # Shape: (num_samples, num_features) per class
-
-    # If it's multinomial logistic regression, shap_values is a list (one array per class)
+    shap_values = explainer.shap_values(X_test_sample)  # This returns a list of arrays (one per class)
+    
+    # For multiclass, take the mean absolute SHAP value across classes
     if isinstance(shap_values, list):
-        shap_values = np.mean(np.abs(np.array(shap_values)), axis=0)  # Mean over classes
+        mean_shap = np.mean([np.abs(sv) for sv in shap_values], axis=0)
+    else:
+        mean_shap = np.abs(shap_values)
     
-    # Compute global feature importance
-    feature_importance = np.mean(np.abs(shap_values), axis=0)  # Shape: (num_features,)
-
+    # Compute feature importance
+    feature_importance = np.mean(mean_shap, axis=0)
+    
     # Filter features where importance > 0
-    important_features_mask = feature_importance > 0
-    filtered_shap_values = shap_values[:, important_features_mask]
-    filtered_feature_names = np.array(feature_names)[important_features_mask]
-
-    # Create the figure
-    plt.figure()
-    shap.summary_plot(filtered_shap_values, X_test_np[:, important_features_mask], feature_names=filtered_feature_names, show=False)
+    important_idx = np.where(feature_importance > 0)[0]
+    if len(important_idx) == 0:  # If no features meet the criteria, use all features
+        important_idx = np.arange(len(feature_names))
     
-    # Add title to the plot
+    # Get filtered features and SHAP values
+    filtered_features = [feature_names[i] for i in important_idx]
+    filtered_X_test = X_test_sample[:, important_idx]
+    
+    if isinstance(shap_values, list):
+        filtered_shap_values = [sv[:, important_idx] for sv in shap_values]
+    else:
+        filtered_shap_values = shap_values[:, important_idx]
+    
+    # Create and save the plot
+    plt.figure(figsize=(12, 8))
+    if isinstance(filtered_shap_values, list):
+        # For multiclass, plot the mean absolute SHAP values
+        shap.summary_plot(filtered_shap_values[0], filtered_X_test, 
+                         feature_names=filtered_features, show=False)
+    else:
+        shap.summary_plot(filtered_shap_values, filtered_X_test, 
+                         feature_names=filtered_features, show=False)
+    
     plt.title(f"SHAP Summary Plot for {location_code.upper()}", fontsize=14)
-
-    # Save the figure
+    plt.tight_layout()
     plt.savefig(save_path, bbox_inches="tight")
     plt.close()
     
